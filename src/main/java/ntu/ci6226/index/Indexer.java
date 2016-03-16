@@ -1,4 +1,4 @@
-package ntu.ci6226;
+package ntu.ci6226.index;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;

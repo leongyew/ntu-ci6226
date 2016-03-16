@@ -1,10 +1,18 @@
-package ntu.ci6226;//
+package ntu.ci6226.index;//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by Fernflower decompiler)
+//
 
+
+
+import java.io.IOException;
+import java.io.Reader;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.core.StopAnalyzer;
 import org.apache.lucene.analysis.core.StopFilter;
+import org.apache.lucene.analysis.en.PorterStemFilter;
 import org.apache.lucene.analysis.standard.StandardFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.standard.std40.StandardTokenizer40;
@@ -12,24 +20,21 @@ import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.analysis.util.StopwordAnalyzerBase;
 import org.apache.lucene.util.Version;
 
-import java.io.IOException;
-import java.io.Reader;
-
-public final class CaseSensitiveStandardAnalyzer extends StopwordAnalyzerBase {
+public final class PorterStemmerStandardAnalyzer extends StopwordAnalyzerBase {
     public static final int DEFAULT_MAX_TOKEN_LENGTH = 255;
     private int maxTokenLength;
     public static final CharArraySet STOP_WORDS_SET;
 
-    public CaseSensitiveStandardAnalyzer(CharArraySet stopWords) {
+    public PorterStemmerStandardAnalyzer(CharArraySet stopWords) {
         super(stopWords);
         this.maxTokenLength = 255;
     }
 
-    public CaseSensitiveStandardAnalyzer() {
+    public PorterStemmerStandardAnalyzer() {
         this(STOP_WORDS_SET);
     }
 
-    public CaseSensitiveStandardAnalyzer(Reader stopwords) throws IOException {
+    public PorterStemmerStandardAnalyzer(Reader stopwords) throws IOException {
         this(loadStopwordSet(stopwords));
     }
 
@@ -54,10 +59,12 @@ public final class CaseSensitiveStandardAnalyzer extends StopwordAnalyzerBase {
         }
 
         StandardFilter tok2 = new StandardFilter((TokenStream)src);
-        final StopFilter tok3 = new StopFilter(tok2, this.stopwords);
-        return new TokenStreamComponents((Tokenizer)src, tok3) {
+        LowerCaseFilter tok3 = new LowerCaseFilter(tok2);
+        StopFilter tok4 = new StopFilter(tok3, this.stopwords);
+        final PorterStemFilter tok5 = new PorterStemFilter(tok4);
+        return new TokenStreamComponents((Tokenizer)src, tok5) {
             protected void setReader(Reader reader) {
-                int m = CaseSensitiveStandardAnalyzer.this.maxTokenLength;
+                int m = PorterStemmerStandardAnalyzer.this.maxTokenLength;
                 if(src instanceof StandardTokenizer) {
                     ((StandardTokenizer)src).setMaxTokenLength(m);
                 } else {

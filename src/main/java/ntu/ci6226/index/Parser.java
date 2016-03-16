@@ -1,7 +1,6 @@
-package ntu.ci6226;
+package ntu.ci6226.index;
 
 import java.io.*;
-import java.util.*;
 import javax.xml.parsers.*;
 
 import org.xml.sax.*;
