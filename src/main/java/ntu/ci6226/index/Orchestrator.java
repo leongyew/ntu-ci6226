@@ -14,7 +14,7 @@ import java.nio.file.Paths;
 /**
  * Created by alexto on 2/3/16.
  */
-public class IndexBuilder {
+public class Orchestrator {
 
     private static final String input = "dblp.xml";
     private static final String newLine = System.getProperty("line.separator");

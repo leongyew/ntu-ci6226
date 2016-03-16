@@ -37,7 +37,7 @@ public class Indexer {
         doc.add(new StringField("key", publication.getKey(), Field.Store.YES));
         doc.add(new TextField("title", publication.getTitle(), Field.Store.NO));
         doc.add(new IntField("year", publication.getYear(), Field.Store.NO));
-        doc.add(new TextField("venue", publication.getVenue(), Field.Store.NO));
+        doc.add(new StringField("venue", publication.getVenue(), Field.Store.NO));
         doc.add(new StringField("type", publication.getType(), Field.Store.NO));
         Person[] authors = publication.getAuthors();
         for (Person author : authors) {
