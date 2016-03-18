@@ -4,6 +4,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
@@ -28,8 +29,8 @@ public class Indexer {
         Document doc = new Document();
         doc.add(new IntField("id", book.getId(), Field.Store.YES));
         doc.add(new TextField("title", book.getTitle(), Field.Store.NO));
-        doc.add(new IntField("year", book.getYear(), Field.Store.YES));
-        doc.add(new TextField("author", book.getAuthor(), Field.Store.NO));
+        doc.add(new IntField("year", book.getYear(), Field.Store.NO));
+        doc.add(new StringField("author", book.getAuthor(), Field.Store.NO));
         doc.add(new TextField("content", book.getContent(), Field.Store.NO));
         indexWriter.addDocument(doc);
     }
@@ -37,5 +38,13 @@ public class Indexer {
     public void Close() throws IOException {
         if (indexWriter != null && indexWriter.isOpen())
             indexWriter.close();
+    }
+
+    public void updateDocument(Term term, Document doc) throws IOException {
+        indexWriter.updateDocument(term, doc);
+    }
+
+    public void commit() throws IOException {
+        indexWriter.commit();
     }
 }

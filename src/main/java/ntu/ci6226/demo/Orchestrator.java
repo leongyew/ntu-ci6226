@@ -3,8 +3,13 @@ package ntu.ci6226.demo;
 import ntu.ci6226.index.PorterStemmerStandardAnalyzer;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -32,14 +37,14 @@ public class Orchestrator {
                 .setTitle("Bowl: Vegetarian Recipes for Ramen, Pho, Bibimbap, Dumplings, and Other One-Dish Meals")
                 .setContent("A restorative bowl of vegetarian ramen sent Lukas Volger on a quest to capture the full flavor of all the one-bowl meals that are the rage today—but in vegetarian form. With the bowl as organizer, the possibilities for improvisational meals full of seasonal produce and herbs are nearly endless")
                 .setAuthor("Lukas Volger")
-                .setYear(2014));
+                .setYear(2011));
 
         books.add(new Book()
                 .setId(2)
                 .setTitle("Veggie Burgers Every Which Way: Fresh, Flavorful and Healthy Vegan and Vegetarian Burgers-Plus Toppings, Sides, Buns and More")
                 .setContent("Whether you already subsist on veggie burgers, enjoy them occasionally, or ardently wish there was an alternative to the rubbery, over-processed frozen burgers sold in cardboard boxes, Veggie Burgers Every Which Way is the book for you–one you will want to cook from over and over again.")
-                .setAuthor("Lukas Wolfgang")
-                .setYear(2014));
+                .setAuthor("Julia Wolfgang")
+                .setYear(2012));
 
         books.add(new Book()
                 .setId(3)
@@ -67,28 +72,66 @@ public class Orchestrator {
             indexer.Index(book);
         }
 
-        indexer.Close();
 
-        String keywords = "New York Vegetarian";
+        String keywords = "Julia New York";
 
-        IndexReader indexReader = DirectoryReader.open(FSDirectory.open(Paths.get("demo")));
+        DirectoryReader directoryReader = DirectoryReader.open(FSDirectory.open(Paths.get("demo")));
+        IndexReader indexReader = directoryReader;
         IndexSearcher searcher = new IndexSearcher(indexReader);
         Analyzer analyzer = new PorterStemmerStandardAnalyzer();
 
-        QueryParser parser = new QueryParser("content", analyzer);
         MultiFieldQueryParser multiFieldQueryParser = new MultiFieldQueryParser(allFields, analyzer);
 
-        Query query = parser.parse(keywords);
+
         Query multiFieldsQuery = multiFieldQueryParser.parse(keywords);
         TopDocs results = searcher.search(multiFieldsQuery, 5);
 
         ScoreDoc[] hits = results.scoreDocs;
 
+
         for (int i = 0; i < hits.length; i++) {
             Document doc = searcher.doc(hits[i].doc);
-            System.out.println(doc.get("year"));
+            System.out.println(doc.get("id"));
         }
 
+        System.out.println("------------------------------------------");
+
+
+        keywords = "author:\"Rocco DiSprito\"";
+        QueryParser parser = new QueryParser("content", analyzer);
+        Query query = parser.parse(keywords);
+        TopDocs result = searcher.search(query, 5);
+        ScoreDoc[] hit = result.scoreDocs;
+
+        for (int i = 0; i < hit.length; i++) {
+            Document doc = searcher.doc(hit[i].doc);
+            System.out.println(doc.get("id"));
+            doc.add(new StringField("author", "Alex To", Field.Store.NO));
+            indexer.updateDocument(new Term("id", "5"), doc);
+            indexer.commit();
+        }
+
+        DirectoryReader newDirectoryReader = DirectoryReader.openIfChanged(directoryReader);
+        if (newDirectoryReader != null)
+        {
+            directoryReader.close();
+            indexReader = newDirectoryReader;
+        }
+
+        searcher = new IndexSearcher(indexReader);
+        keywords = "author:alex";
+        query = parser.parse(keywords);
+        result = searcher.search(query, 5);
+        hits = result.scoreDocs;
+
+        System.out.println("------------------------------------------");
+
+        for (int i = 0; i < hits.length; i++) {
+            Document doc = searcher.doc(hits[i].doc);
+            System.out.println(doc.get("id"));
+        }
+
+        indexer.Close();
     }
 
 }

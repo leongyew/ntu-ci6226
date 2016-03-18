@@ -72,7 +72,7 @@ public class Parser {
                 if (this.indexer != null)
                     try {
                         indexer.Index(p);
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 numberOfPersons = 0;
