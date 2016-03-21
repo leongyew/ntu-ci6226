@@ -13,10 +13,7 @@ import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
 
 import java.io.IOException;
@@ -72,8 +69,9 @@ public class Orchestrator {
             indexer.Index(book);
         }
 
+        indexer.Close();
 
-        String keywords = "Julia New York";
+        String keywords = "2013";
 
         DirectoryReader directoryReader = DirectoryReader.open(FSDirectory.open(Paths.get("demo")));
         IndexReader indexReader = directoryReader;
@@ -96,8 +94,16 @@ public class Orchestrator {
 
         System.out.println("------------------------------------------");
 
+        Query query = new TermQuery(new Term("author","rocco DiSprito"));
+        results = searcher.search(query, 5);
 
-        keywords = "author:\"Rocco DiSprito\"";
+        hits = results.scoreDocs;
+
+        for (int i = 0; i < hits.length; i++) {
+            Document doc = searcher.doc(hits[i].doc);
+            System.out.println(doc.get("id"));
+        }
+        /*
         QueryParser parser = new QueryParser("content", analyzer);
         Query query = parser.parse(keywords);
         TopDocs result = searcher.search(query, 5);
@@ -106,10 +112,11 @@ public class Orchestrator {
         for (int i = 0; i < hit.length; i++) {
             Document doc = searcher.doc(hit[i].doc);
             System.out.println(doc.get("id"));
-            doc.add(new StringField("author", "Alex To", Field.Store.NO));
-            indexer.updateDocument(new Term("id", "5"), doc);
-            indexer.commit();
+            //doc.add(new StringField("author", "Alex To", Field.Store.NO));
+            //indexer.updateDocument(new Term("id", "5"), doc);
+            //indexer.commit();
         }
+
 
         DirectoryReader newDirectoryReader = DirectoryReader.openIfChanged(directoryReader);
         if (newDirectoryReader != null)
@@ -131,7 +138,7 @@ public class Orchestrator {
             System.out.println(doc.get("id"));
         }
 
-        indexer.Close();
+        */
     }
 
 }

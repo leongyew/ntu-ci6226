@@ -147,12 +147,12 @@ public class Orchestrator {
             return;
 
         Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("case5_report.txt"), "utf-8"));
-        writer.write("Index without stemming, no stop words and case sensitive." + newLine);
-        System.out.println("1. Index  without stemming, no stop words and case sensitive.");
+        writer.write("Index by venue and year." + newLine);
+        System.out.println("Index by venue and year.");
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        Indexer indexer = new Indexer("Index5", new PorterStemmerStandardAnalyzer());
+        Indexer indexer = new Indexer("Index5", new PorterStemmerStandardAnalyzer(), IndexMode.BY_VENUE_YEAR);
         Parser p = new Parser(input, indexer);
         p.Parse();
         indexer.Close();
@@ -160,7 +160,7 @@ public class Orchestrator {
 
         writer.write("Elapsed time: " + stopWatch.toString() + newLine);
         System.out.println("\tElapsed time: " + stopWatch.toString());
-        writeTerms("Index1", writer);
+        writeTerms("Index5", writer);
         writer.close();
         System.out.println("\tReport written to case5_report.txt");
     }

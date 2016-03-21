@@ -2,16 +2,10 @@ package ntu.ci6226.index;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
@@ -30,16 +24,16 @@ public class Indexer {
     private DirectoryReader directoryReader;
     private int count = 0;
     private IndexMode mode;
+    private boolean recordExist;
+    private String indexPath;
 
     public Indexer(String indexPath, Analyzer analyzer) throws IOException {
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
         Directory dir = FSDirectory.open(Paths.get(indexPath));
         this.indexWriter = new IndexWriter(dir, indexWriterConfig);
-
-        this.directoryReader = DirectoryReader.open(dir);
-        this.indexReader = directoryReader;
-
+        this.recordExist = false;
+        this.indexPath = indexPath;
         this.mode = BY_PUBLICATION;
     }
 
@@ -80,26 +74,69 @@ public class Indexer {
         count++;
         Document doc = new Document();
         doc.add(new StringField("key", publication.getKey(), Field.Store.YES));
-        doc.add(new TextField("title", publication.getTitle(), Field.Store.NO));
-        doc.add(new IntField("year", publication.getYear(), Field.Store.NO));
-        doc.add(new StringField("venue", publication.getVenue(), Field.Store.NO));
-        doc.add(new StringField("type", publication.getType(), Field.Store.NO));
+        doc.add(new TextField("title", publication.getTitle(), Field.Store.YES));
+        doc.add(new IntField("year", publication.getYear(), Field.Store.YES));
+        doc.add(new StringField("venue", publication.getVenue(), Field.Store.YES));
+        doc.add(new StringField("type", publication.getType(), Field.Store.YES));
         Person[] authors = publication.getAuthors();
         for (Person author : authors) {
-            doc.add(new TextField("author", author.getName(), Field.Store.NO));
+            doc.add(new TextField("author", author.getName(), Field.Store.YES));
         }
         this.indexWriter.addDocument(doc);
     }
 
     private void IndexByVenueYear(Publication publication) throws IOException, ParseException {
         count++;
-        this.indexReader = DirectoryReader.openIfChanged(directoryReader);
-        IndexSearcher indexSearcher = new IndexSearcher(this.indexReader);
+        Document doc;
+        ScoreDoc[] hits = null;
+        boolean newDoc = true;
+        String id = String.format("%1s_%2s", publication.getYear(), publication.getVenue());
 
-        String keywords = String.format("venue:{} year:{}", publication);
-        QueryParser parser = new QueryParser("content", new PorterStemmerStandardAnalyzer());
-        Query query = parser.parse(keywords);
-        TopDocs result = indexSearcher.search(query, 5);
-        ScoreDoc[] hit = result.scoreDocs;
+        if (recordExist) {
+            if (this.indexReader == null) {
+                directoryReader = DirectoryReader.open(FSDirectory.open(Paths.get(this.indexPath)));
+                this.indexReader = directoryReader;
+            } else {
+                DirectoryReader newReader = DirectoryReader.openIfChanged(directoryReader);
+                if (newReader != null) {
+                    this.indexReader = newReader;
+                }
+            }
+            IndexSearcher indexSearcher = new IndexSearcher(this.indexReader);
+
+            Query query = new TermQuery(new Term("id", id));
+            TopDocs result = indexSearcher.search(query, 5);
+            hits = result.scoreDocs;
+            if (hits != null && hits.length > 0) {
+                doc = indexSearcher.doc(hits[0].doc);
+                newDoc = false;
+                System.out.println("Updating existing entry for " + id);
+            } else {
+                doc = new Document();
+                doc.add(new StringField("id", id, Field.Store.YES));
+                System.out.println("Adding new entry for " + id);
+            }
+        } else {
+            doc = new Document();
+            doc.add(new StringField("id", id, Field.Store.YES));
+            System.out.println("Adding new entry for " + id);
+        }
+
+
+        doc.add(new StringField("key", publication.getKey(), Field.Store.YES));
+        doc.add(new TextField("title", publication.getTitle(), Field.Store.YES));
+        doc.add(new StringField("type", publication.getType(), Field.Store.YES));
+        Person[] authors = publication.getAuthors();
+        for (Person author : authors) {
+            doc.add(new TextField("author", author.getName(), Field.Store.YES));
+        }
+
+        if (newDoc)
+            this.indexWriter.addDocument(doc);
+        else
+            this.indexWriter.updateDocument(new Term("id", id), doc);
+
+        this.recordExist = true;
+        this.indexWriter.commit();
     }
 }
