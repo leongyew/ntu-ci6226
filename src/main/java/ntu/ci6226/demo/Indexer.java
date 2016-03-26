@@ -25,7 +25,7 @@ public class Indexer {
         indexWriter = new IndexWriter(dir, indexWriterConfig);
     }
 
-    public void Index(Book book) throws IOException {
+    public void index(Book book) throws IOException {
         Document doc = new Document();
         doc.add(new IntField("id", book.getId(), Field.Store.YES));
         doc.add(new TextField("title", book.getTitle(), Field.Store.NO));
@@ -35,7 +35,7 @@ public class Indexer {
         indexWriter.addDocument(doc);
     }
 
-    public void Close() throws IOException {
+    public void close() throws IOException {
         if (indexWriter != null && indexWriter.isOpen())
             indexWriter.close();
     }

@@ -3,6 +3,7 @@ package ntu.ci6226.index;
 import java.io.*;
 import javax.xml.parsers.*;
 
+import ntu.ci6226.models.Publication;
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 
@@ -22,7 +23,7 @@ public class Parser {
         private String year;
         private String venue;
         private String recordTag;
-        private Person[] persons = new Person[maxAuthorsPerPaper];
+        private String[] authors = new String[maxAuthorsPerPaper];
         private int numberOfPersons = 0;
 
         private boolean insidePerson;
@@ -40,10 +41,30 @@ public class Parser {
 
         public void startElement(String namespaceURI, String localName,
                                  String rawName, Attributes atts) throws SAXException {
-            insidePerson = (rawName.equals("author") || rawName.equals("editor"));
-            insideTitle = (rawName.equals("title"));
-            insideYear = (rawName.equals("year"));
-            insideVenue = (rawName.equals("journal") || rawName.equals("booktitle"));
+            if (("author".equals(rawName) || "editor".equals(rawName))) {
+                insidePerson = true;
+                author = "";
+            }
+            else insidePerson = false;
+
+            if (("title".equals(rawName))) {
+                insideTitle = true;
+                title = "";
+            }
+            else insideTitle = false;
+
+            if (("year".equals(rawName))) {
+                insideYear = true;
+                year = "";
+            }
+            else insideYear = false;
+
+            if (("journal".equals(rawName) || "booktitle".equals(rawName))) {
+                insideVenue = true;
+                venue = "";
+            }
+            else insideVenue = false;
+
             String k;
             if ((atts.getLength() > 0) && ((k = atts.getValue("key")) != null)) {
                 key = k;
@@ -55,18 +76,17 @@ public class Parser {
                                String rawName) throws SAXException {
             if (rawName.equals("author") || rawName.equals("editor")) {
 
-                Person p = new Person(author);
                 if (numberOfPersons < maxAuthorsPerPaper)
-                    persons[numberOfPersons++] = p;
+                    authors[numberOfPersons++] = author;
                 return;
             }
             if (rawName.equals(recordTag)) {
                 if (numberOfPersons == 0)
                     return;
-                Person pa[] = new Person[numberOfPersons];
+                String pa[] = new String[numberOfPersons];
                 for (int i = 0; i < numberOfPersons; i++) {
-                    pa[i] = persons[i];
-                    persons[i] = null;
+                    pa[i] = authors[i];
+                    authors[i] = null;
                 }
                 Publication p = new Publication(key, recordTag, title, year, venue, pa);
                 if (this.indexer != null)
@@ -82,14 +102,13 @@ public class Parser {
         public void characters(char[] ch, int start, int length)
                 throws SAXException {
             if (insidePerson)
-                author = new String(ch, start, length);
+                author += new String(ch, start, length);
             if (insideVenue)
-                venue = new String(ch, start, length);
+                venue += new String(ch, start, length);
             if (insideTitle)
-                title = new String(ch, start, length);
+                title += new String(ch, start, length);
             if (insideYear)
-                year = new String(ch, start, length);
-
+                year += new String(ch, start, length);
         }
 
         private void Message(String mode, SAXParseException exception) {

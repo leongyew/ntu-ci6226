@@ -18,7 +18,7 @@ import org.thymeleaf.templateresolver.ServletContextTemplateResolver;
 @Configuration
 @EnableWebMvc
 @Import({MvcConfig.class})
-@ComponentScan(basePackages = "ntu.ci6226.web")
+@ComponentScan(basePackages = "ntu.ci6226")
 public class AppConfig {
     @Bean
     public ServletContextTemplateResolver getTemplateResolver() {

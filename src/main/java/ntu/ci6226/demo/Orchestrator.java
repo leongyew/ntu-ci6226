@@ -3,16 +3,11 @@ package ntu.ci6226.demo;
 import ntu.ci6226.index.PorterStemmerStandardAnalyzer;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
 
@@ -66,10 +61,10 @@ public class Orchestrator {
                 .setYear(2016));
 
         for (Book book : books) {
-            indexer.Index(book);
+            indexer.index(book);
         }
 
-        indexer.Close();
+        indexer.close();
 
         String keywords = "2013";
 

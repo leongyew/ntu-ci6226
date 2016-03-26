@@ -3,10 +3,13 @@ package ntu.ci6226.index;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
+import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.NumericUtils;
 
 import java.io.*;
 import java.nio.file.Paths;
@@ -18,14 +21,14 @@ public class Orchestrator {
 
     private static final String input = "dblp.xml";
     private static final String newLine = System.getProperty("line.separator");
+
     public static void main(String[] args) throws IOException {
         indexCase1();
         indexCase2();
         indexCase3();
         indexCase4();
-        indexCase5();
+        //indexByYearVenue();
     }
-
 
 
     private static void indexCase1() throws IOException {
@@ -119,6 +122,7 @@ public class Orchestrator {
         if (file.exists())
             return;
 
+
         Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("case4_report.txt"), "utf-8"));
         writer.write("Index with Porter stemmer, using default set of stop words." + newLine);
         System.out.println("4. Index with Porter stemmer, using default set of stop words.");
@@ -140,7 +144,7 @@ public class Orchestrator {
         System.out.println("\tReport written to case4_report.txt");
     }
 
-    private static void indexCase5() throws IOException {
+    /*private static void indexCase5() throws IOException {
 
         File file = new File("case5_report.txt");
         if (file.exists())
@@ -163,6 +167,58 @@ public class Orchestrator {
         writeTerms("Index5", writer);
         writer.close();
         System.out.println("\tReport written to case5_report.txt");
+    }*/
+
+    private static void indexByYearVenue() throws IOException {
+        Directory dir = FSDirectory.open(Paths.get("Index4"));
+        IndexReader indexReader = DirectoryReader.open(dir);
+        IndexSearcher indexSearcher = new IndexSearcher(indexReader);
+
+        Directory dir2 = FSDirectory.open(Paths.get("Index5"));
+        IndexWriterConfig indexWriterConfig = new IndexWriterConfig(new PorterStemmerStandardAnalyzer());
+        indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+        IndexWriter indexWriter = new IndexWriter(dir2, indexWriterConfig);
+
+        Terms yearTerms = MultiFields.getTerms(indexReader, "year");
+        Terms venueTerms = MultiFields.getTerms(indexReader, "venue");
+        TermsEnum iterator1 = yearTerms.iterator();
+        BytesRef yearBytesRef;
+        int count = 0;
+        while ((yearBytesRef = iterator1.next()) != null) {
+            TermsEnum iterator2 = venueTerms.iterator();
+            BytesRef venueBytesRef;
+            while ((venueBytesRef = iterator2.next()) != null) {
+                String venue = venueBytesRef.utf8ToString();
+                Integer year = NumericUtils.prefixCodedToInt(yearBytesRef);
+                TermQuery venueQuery = new TermQuery(new Term("venue", venue));
+                Query yearQuery = NumericRangeQuery.newIntRange("year", year, year, true, true);
+                BooleanQuery.Builder builder = new BooleanQuery.Builder();
+                builder.add(venueQuery, BooleanClause.Occur.MUST);
+                builder.add(yearQuery, BooleanClause.Occur.MUST);
+                BooleanQuery query = builder.build();
+                TopDocs hits = indexSearcher.search(query, 100000);
+                if (hits.totalHits > 0) {
+                    Document doc = new Document();
+                    doc.add(new StringField("venue", venue, Field.Store.YES));
+                    doc.add(new IntField("year", year, Field.Store.YES));
+                    for (ScoreDoc scoreDoc : hits.scoreDocs) {
+                        Document d = indexSearcher.doc(scoreDoc.doc);
+                        doc.add(new StringField("key", d.get("key"), Field.Store.YES));
+                        doc.add(new TextField("title", d.get("title"), Field.Store.YES));
+                        doc.add(new StringField("type", d.get("type"), Field.Store.YES));
+                        String[] authors = d.getValues("author");
+                        for (String author : authors) {
+                            doc.add(new TextField("author", author, Field.Store.YES));
+                        }
+                    }
+                    count++;
+                    indexWriter.addDocument(doc);
+                }
+            }
+        }
+        System.out.println("Total number of documents: " + count);
+        indexWriter.close();
+        indexReader.close();
     }
 
     private static void writeTerms(String index, Writer writer) throws IOException {
@@ -180,6 +236,9 @@ public class Orchestrator {
         }
         writer.write(newLine);
         writer.write("Total number of terms: " + count);
+        writer.write(newLine);
+        writer.write("Total number of documents: " + indexReader.numDocs());
+        System.out.println("\tTotal number of documents: " + indexReader.numDocs());
         System.out.println("\tTotal number of terms in Title field: " + count);
     }
 }
