@@ -1,0 +1,23 @@
+{
+  "name": "Project1",
+  "homepage": "https://github.com/alexto/ci6226_proj1",
+  "authors": [
+    "alexto <tonhudung@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "moduleType": [],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "^3.3.6",
+    "html5shiv": "^3.7.3",
+    "respond": "^1.4.2"
+  }
+}
