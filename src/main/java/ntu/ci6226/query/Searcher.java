@@ -13,4 +13,5 @@ import java.util.ArrayList;
 public interface Searcher {
     ArrayList<PublicationSearchHit> searchByPublication(String query) throws IOException, ParseException;
     ArrayList<YearVenueSearchHit> searchByVenueYear(String query) throws IOException, ParseException;
+    ArrayList<YearVenueSearchHit> searchByVenueYear2(String query) throws IOException, ParseException;
 }

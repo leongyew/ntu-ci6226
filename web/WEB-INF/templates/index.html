@@ -35,6 +35,7 @@
                         <select class="form-control" id="mode" name="mode">
                             <option value="publication" th:selected="${mode=='publication'}">publication</option>
                             <option value="venueyear" th:selected="${mode=='venueyear'}">venue/year</option>
+                            <option value="venueyear2" th:selected="${mode=='venueyear2'}">venue/year-2</option>
                         </select>
                     </div>
                     <button type="submit" class="btn btn-success">Search</button>
@@ -71,6 +72,18 @@
                     <ul th:each="title: ${hit.titles}">
                         <li>[[${title}]]</li>
                     </ul>
+                    <p>
+                        <small>score: [[${hit.score}]]</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row results" th:if="${not #lists.isEmpty(yearVenueSearchHits2)}">
+        <div class="col-md-12">
+            <div class="row" th:each="hit : ${yearVenueSearchHits2}">
+                <div class="col-md-12 margin-bottom-20" th:inline="text">
+                    <h4>[[${hit.venue}]] [[${hit.year}]]</h4>
                     <p>
                         <small>score: [[${hit.score}]]</small>
                     </p>

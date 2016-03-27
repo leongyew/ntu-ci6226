@@ -48,10 +48,16 @@ public class IndexController {
             ArrayList<YearVenueSearchHit> yearVenueSearchHits = searcher.searchByVenueYear(query);
             count = yearVenueSearchHits.size();
             mav.addObject("yearVenueSearchHits", yearVenueSearchHits);
+        } else if ("venueyear2".equals(mode))
+        {
+            ArrayList<YearVenueSearchHit> yearVenueSearchHits = searcher.searchByVenueYear2(query);
+            count = yearVenueSearchHits.size();
+            mav.addObject("yearVenueSearchHits2", yearVenueSearchHits);
         }
+
         stopWatch.stop();
         mav.addObject("count", count);
-        mav.addObject("elapsed", stopWatch.toString());
+        mav.addObject("elapsed", (float)stopWatch.getTime() / 1000);
 
         return mav;
     }
