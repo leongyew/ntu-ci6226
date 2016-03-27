@@ -34,13 +34,15 @@ public class SearcherImpl implements Searcher {
     private static String publicationIndex = "/Volumes/Data/Users/alexto/Projects/NTU/CI6226/IndexByPublication";
     private static String venueYearIndex = "/Volumes/Data/Users/alexto/Projects/NTU/CI6226/IndexByYearVenue";
     private static Integer maxSearchResults = 100;
+
     private static String[] allFields = new String[]{"title", "venue", "author"};
 
     public ArrayList<PublicationSearchHit> searchByPublication(String query) throws IOException, ParseException {
         Directory dir = FSDirectory.open(Paths.get(SearcherImpl.publicationIndex));
         IndexReader indexReader = DirectoryReader.open(dir);
         IndexSearcher indexSearcher = new IndexSearcher(indexReader);
-        MultiFieldQueryParser multiFieldQueryParser = new MultiFieldQueryParser(allFields, new PorterStemmerStandardAnalyzer());
+        MultiFieldQueryParser multiFieldQueryParser = new MultiFieldQueryParser(allFields,
+                new PorterStemmerStandardAnalyzer());
         Query q = multiFieldQueryParser.parse(query);
         TopDocs docs = indexSearcher.search(q, SearcherImpl.maxSearchResults);
         ArrayList<PublicationSearchHit> publications = new ArrayList<PublicationSearchHit>();
@@ -61,7 +63,7 @@ public class SearcherImpl implements Searcher {
         return publications;
     }
 
-    public ArrayList<YearVenueSearchHit> searchByVenueYear(String query) throws IOException, ParseException {
+    public ArrayList<YearVenueSearchHit> searchByVenueYear2(String query) throws IOException, ParseException {
 
         Directory dir = FSDirectory.open(Paths.get(SearcherImpl.venueYearIndex));
         IndexReader indexReader = DirectoryReader.open(dir);
@@ -85,7 +87,7 @@ public class SearcherImpl implements Searcher {
         return yearVenueSearchHits;
     }
 
-    public ArrayList<YearVenueSearchHit> searchByVenueYear2(String query) throws IOException, ParseException {
+    public ArrayList<YearVenueSearchHit> searchByVenueYear(String query) throws IOException, ParseException {
 
         Integer year = Integer.parseInt(query.substring(query.length() - 4));
         String venue = query.substring(0, query.length() - 4).trim();

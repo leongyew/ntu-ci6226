@@ -5,6 +5,8 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
+import org.apache.lucene.misc.HighFreqTerms;
+import org.apache.lucene.misc.TermStats;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -22,12 +24,14 @@ public class Orchestrator {
     private static final String input = "dblp.xml";
     private static final String newLine = System.getProperty("line.separator");
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         indexCase1();
         indexCase2();
         indexCase3();
         indexCase4();
         //indexByYearVenue();
+        indexByYear();
+        showTopTopics();
     }
 
 
@@ -240,5 +244,55 @@ public class Orchestrator {
         writer.write("Total number of documents: " + indexReader.numDocs());
         System.out.println("\tTotal number of documents: " + indexReader.numDocs());
         System.out.println("\tTotal number of terms in Title field: " + count);
+    }
+
+
+    private static void indexByYear() throws IOException {
+        Directory dir = FSDirectory.open(Paths.get("Index4"));
+        IndexReader indexReader = DirectoryReader.open(dir);
+        IndexSearcher indexSearcher = new IndexSearcher(indexReader);
+
+
+        for (int i = 2000; i < 2003; i++) {
+            Directory dir2 = FSDirectory.open(Paths.get("Index_" + i));
+            IndexWriterConfig indexWriterConfig = new IndexWriterConfig(new PorterStemmerStandardAnalyzer());
+            indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+            IndexWriter indexWriter = new IndexWriter(dir2, indexWriterConfig);
+
+
+            Query yearQuery = NumericRangeQuery.newIntRange("year", i, i, true, true);
+            TopDocs topDocs = indexSearcher.search(yearQuery, 100000);
+            if (topDocs.totalHits > 0) {
+                for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
+                    Document doc = indexSearcher.doc(scoreDoc.doc);
+                    indexWriter.addDocument(doc);
+                }
+            }
+
+            indexWriter.close();
+        }
+
+        indexReader.close();
+    }
+
+    private static void showTopTopics() throws Exception {
+        Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("2_1_report.txt"), "utf-8"));
+
+        for (int i = 2000; i < 2003; i++) {
+            Directory dir = FSDirectory.open(Paths.get("Index_" + i));
+            IndexReader indexReader = DirectoryReader.open(dir);
+            writer.write("Year " + i);
+            writer.write(newLine);
+            TermStats[] highFreqTerms = null;
+            highFreqTerms = HighFreqTerms.getHighFreqTerms(indexReader, 10, "title", new TFIDFComparator(indexReader.numDocs()));
+            for (TermStats ts : highFreqTerms) {
+                double tf = Math.sqrt(ts.totalTermFreq);
+                double idf = 1 + Math.log(indexReader.numDocs() / ts.docFreq);
+                writer.write("\t" + ts.termtext.utf8ToString() + " | docFreq " + ts.docFreq + " | termFreq " + ts.totalTermFreq + " | tfidf " + tf * idf);
+                writer.write(newLine);
+            }
+        }
+
+        writer.close();
     }
 }
