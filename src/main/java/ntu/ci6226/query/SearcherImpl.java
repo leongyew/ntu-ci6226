@@ -63,7 +63,7 @@ public class SearcherImpl implements Searcher {
         return publications;
     }
 
-    public ArrayList<YearVenueSearchHit> searchByVenueYear2(String query) throws IOException, ParseException {
+    public ArrayList<YearVenueSearchHit> searchByVenueYear(String query) throws IOException, ParseException {
 
         Directory dir = FSDirectory.open(Paths.get(SearcherImpl.venueYearIndex));
         IndexReader indexReader = DirectoryReader.open(dir);
@@ -87,7 +87,7 @@ public class SearcherImpl implements Searcher {
         return yearVenueSearchHits;
     }
 
-    public ArrayList<YearVenueSearchHit> searchByVenueYear(String query) throws IOException, ParseException {
+    public ArrayList<YearVenueSearchHit> searchByVenueYear2(String query) throws IOException, ParseException {
 
         Integer year = Integer.parseInt(query.substring(query.length() - 4));
         String venue = query.substring(0, query.length() - 4).trim();

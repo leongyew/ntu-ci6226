@@ -17,8 +17,8 @@ public class TFIDFComparator implements Comparator<TermStats> {
     public int compare(TermStats a, TermStats b) {
         double tfa = Math.sqrt(a.totalTermFreq);
         double tfb = Math.sqrt(b.totalTermFreq);
-        double idfa = 1 + Math.log(this.numDocs / (a.docFreq + 1));
-        double idfb = 1 + Math.log(this.numDocs / (b.docFreq + 1));
+        double idfa = 1 + Math.log(this.numDocs / ((double)a.docFreq + 1));
+        double idfb = 1 + Math.log(this.numDocs / ((double)b.docFreq + 1));
 
         int res = Double.compare(tfa * idfa, tfb * idfb);
         if (res == 0) {
