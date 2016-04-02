@@ -30,8 +30,10 @@ public class Orchestrator {
         indexCase3();
         indexCase4();
         //indexByYearVenue();
-        indexByYear();
-        showTopTopics();
+        //indexByYear();
+        indexByYearBiGram();
+        //showTopTopics();
+        showTopTopicsBiGram();
     }
 
 
@@ -253,9 +255,37 @@ public class Orchestrator {
         IndexSearcher indexSearcher = new IndexSearcher(indexReader);
 
 
-        for (int i = 2000; i < 2003; i++) {
+        for (int i = 2000; i < 2017; i++) {
             Directory dir2 = FSDirectory.open(Paths.get("Index_" + i));
             IndexWriterConfig indexWriterConfig = new IndexWriterConfig(new PorterStemmerStandardAnalyzer());
+            indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+            IndexWriter indexWriter = new IndexWriter(dir2, indexWriterConfig);
+
+
+            Query yearQuery = NumericRangeQuery.newIntRange("year", i, i, true, true);
+            TopDocs topDocs = indexSearcher.search(yearQuery, 100000);
+            if (topDocs.totalHits > 0) {
+                for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
+                    Document doc = indexSearcher.doc(scoreDoc.doc);
+                    indexWriter.addDocument(doc);
+                }
+            }
+
+            indexWriter.close();
+        }
+
+        indexReader.close();
+    }
+
+    private static void indexByYearBiGram() throws IOException {
+        Directory dir = FSDirectory.open(Paths.get("Index4"));
+        IndexReader indexReader = DirectoryReader.open(dir);
+        IndexSearcher indexSearcher = new IndexSearcher(indexReader);
+
+
+        for (int i = 2000; i < 2017; i++) {
+            Directory dir2 = FSDirectory.open(Paths.get("BiGram_Index_" + i));
+            IndexWriterConfig indexWriterConfig = new IndexWriterConfig(new BiGramAnalyzer());
             indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
             IndexWriter indexWriter = new IndexWriter(dir2, indexWriterConfig);
 
@@ -278,8 +308,29 @@ public class Orchestrator {
     private static void showTopTopics() throws Exception {
         Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("2_1_report.txt"), "utf-8"));
 
-        for (int i = 2000; i < 2003; i++) {
+        for (int i = 2000; i < 2017; i++) {
             Directory dir = FSDirectory.open(Paths.get("Index_" + i));
+            IndexReader indexReader = DirectoryReader.open(dir);
+            writer.write("Year " + i);
+            writer.write(newLine);
+            TermStats[] highFreqTerms = null;
+            highFreqTerms = HighFreqTerms.getHighFreqTerms(indexReader, 10, "title", new TFIDFComparator(indexReader.numDocs()));
+            for (TermStats ts : highFreqTerms) {
+                double tf = Math.sqrt(ts.totalTermFreq);
+                double idf = 1 + Math.log(indexReader.numDocs() / ts.docFreq);
+                writer.write("\t" + ts.termtext.utf8ToString() + " | docFreq " + ts.docFreq + " | termFreq " + ts.totalTermFreq + " | tfidf " + tf * idf);
+                writer.write(newLine);
+            }
+        }
+
+        writer.close();
+    }
+
+    private static void showTopTopicsBiGram() throws Exception {
+        Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("2_1_report.txt"), "utf-8"));
+
+        for (int i = 2000; i < 2017; i++) {
+            Directory dir = FSDirectory.open(Paths.get("BiGram_Index_" + i));
             IndexReader indexReader = DirectoryReader.open(dir);
             writer.write("Year " + i);
             writer.write(newLine);
